@@ -5,6 +5,7 @@ import Head from 'next/head';
 import styles from '../../styles/coffee-store.module.css';
 import classnames from 'classnames';
 import { useEffect, useState, useContext } from 'react';
+import useSWR from 'swr';
 import { fetchStores } from '../../lib/fetch-stores';
 import { StoreContext } from '../../lib/store-context';
 
@@ -50,10 +51,56 @@ const CoffeeStore = (props) => {
 
   const [votingCount, setVotingCount] = useState(0);
   const [store, setStore] = useState(props.store || {});
+  const { data, error } = useSWR(`/api/get-store-by-id?id=${id}`, (url) =>
+    fetch(url).then((data) => data.json())
+  );
+
+  useEffect(() => {
+    if (data) {
+      setStore(data);
+      setVotingCount(data.voting);
+    }
+  }, [data]);
+
+  if (error) {
+    return <div>Something went wrong retriving confee store page!</div>;
+  }
 
   const {
     state: { stores },
   } = useContext(StoreContext);
+
+  const handleCreateStore = async (store) => {
+    try {
+      await fetch('/api/create-coffee-store', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(store),
+      });
+    } catch (err) {
+      console.error('Error creating the coffee store', err);
+    }
+  };
+
+  const handleVoteStore = async () => {
+    try {
+      let res = await fetch('/api/vote-store', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      });
+      res = await res.json();
+      if (res && res.length > 0) {
+        setVotingCount(votingCount + 1);
+      }
+    } catch (err) {
+      console.error('Error voting the coffee store', err);
+    }
+  };
 
   useEffect(() => {
     if (isEmpty(props.store)) {
@@ -62,9 +109,12 @@ const CoffeeStore = (props) => {
           return item.id.toString() === id; //dynamic id
         });
         setStore(found);
+        handleCreateStore(found);
       }
+    } else {
+      handleCreateStore(props.store);
     }
-  }, [id, props.store, stores]);
+  }, [id]);
 
   if (router.isFallback) {
     return <h3>Loading ...</h3>;
@@ -155,7 +205,7 @@ const CoffeeStore = (props) => {
             <p className={styles.text}>{votingCount}</p>
           </div>
 
-          <button className={styles.upvoteButton} onClick={handleUpvoteButton}>
+          <button className={styles.upvoteButton} onClick={handleVoteStore}>
             Up vote!
           </button>
         </div>
