@@ -48,27 +48,11 @@ export const isEmpty = (obj) => {
 const CoffeeStore = (props) => {
   const router = useRouter();
   const id = router.query.id;
-
-  const [votingCount, setVotingCount] = useState(0);
   const [store, setStore] = useState(props.store || {});
-  const { data, error } = useSWR(`/api/get-store-by-id?id=${id}`, (url) =>
-    fetch(url).then((data) => data.json())
-  );
-
-  useEffect(() => {
-    if (data) {
-      setStore(data);
-      setVotingCount(data.voting);
-    }
-  }, [data]);
-
-  if (error) {
-    return <div>Something went wrong retriving confee store page!</div>;
-  }
-
   const {
     state: { stores },
   } = useContext(StoreContext);
+  const [votingCount, setVotingCount] = useState(0);
 
   const handleCreateStore = async (store) => {
     try {
@@ -81,24 +65,6 @@ const CoffeeStore = (props) => {
       });
     } catch (err) {
       console.error('Error creating the coffee store', err);
-    }
-  };
-
-  const handleVoteStore = async () => {
-    try {
-      let res = await fetch('/api/vote-store', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id }),
-      });
-      res = await res.json();
-      if (res && res.length > 0) {
-        setVotingCount(votingCount + 1);
-      }
-    } catch (err) {
-      console.error('Error voting the coffee store', err);
     }
   };
 
@@ -116,33 +82,25 @@ const CoffeeStore = (props) => {
     }
   }, [id]);
 
+  const { data, error } = useSWR(`/api/get-store-by-id?id=${id}`, (url) =>
+    fetch(url).then((data) => data.json())
+  );
+
+  useEffect(() => {
+    if (data) {
+      setVotingCount(data.voting);
+    }
+  }, [data]);
+
   if (router.isFallback) {
     return <h3>Loading ...</h3>;
   }
+
+  if (error) {
+    return <div>Something went wrong retriving confee store page!</div>;
+  }
+
   const { address, neighborhood, name, imgUrl } = store;
-
-  const handleUpvoteButton = async () => {
-    try {
-      const response = await fetch('/api/favouriteCoffeeStoreById', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id,
-        }),
-      });
-
-      const dbCoffeeStore = await response.json();
-
-      if (dbCoffeeStore && dbCoffeeStore.length > 0) {
-        let count = votingCount + 1;
-        setVotingCount(count);
-      }
-    } catch (err) {
-      console.error('Error upvoting the coffee store', err);
-    }
-  };
 
   return (
     <div className={styles.layout}>
@@ -195,22 +153,52 @@ const CoffeeStore = (props) => {
               <p className={styles.text}>{neighborhood}</p>
             </div>
           )}
-          <div className={styles.iconWrapper}>
-            <Image
-              src="/static/icons/star.svg"
-              width="24"
-              height="24"
-              alt="star icon"
-            />
-            <p className={styles.text}>{votingCount}</p>
-          </div>
-
-          <button className={styles.upvoteButton} onClick={handleVoteStore}>
-            Up vote!
-          </button>
+          <Voting
+            id={id}
+            count={votingCount}
+            onVoted={() => setVotingCount(votingCount + 1)}
+          />
         </div>
       </div>
     </div>
+  );
+};
+
+const Voting = ({ id, count, onVoted }) => {
+  const handleVoteStore = async () => {
+    try {
+      let res = await fetch('/api/vote-store', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      });
+      res = await res.json();
+      if (res && res.length > 0) {
+        onVoted();
+      }
+    } catch (err) {
+      console.error('Error voting the coffee store', err);
+    }
+  };
+
+  return (
+    <>
+      <div className={styles.iconWrapper}>
+        <Image
+          src="/static/icons/star.svg"
+          width="24"
+          height="24"
+          alt="star icon"
+        />
+        <p className={styles.text}>{count}</p>
+      </div>
+
+      <button className={styles.upvoteButton} onClick={handleVoteStore}>
+        Up vote!
+      </button>
+    </>
   );
 };
 

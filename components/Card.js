@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './Card.module.css';
-import classnames from 'classnames'
+import classnames from 'classnames';
 
 const Card = ({ href, name, imgUrl }) => {
   return (
@@ -18,6 +18,7 @@ const Card = ({ href, name, imgUrl }) => {
               src={imgUrl}
               width={260}
               height={160}
+              alt="image"
             />
           </div>
         </div>
