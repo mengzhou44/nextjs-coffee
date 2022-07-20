@@ -19,7 +19,7 @@ const createStoreRecord = async ({
         name,
         address,
         neighbourhood,
-        voting,
+        voting: voting ?? 0,
         imgUrl,
       },
     },
@@ -30,11 +30,11 @@ const createStoreRecord = async ({
 export default async (req, res) => {
   if (req.method === 'POST') {
     try {
-      console.log(req.body);
+      
       const { id, name } = req.body;
       if (id) {
         const records = await findRecordByFilter(id);
-        console.log('records', records);
+        
         if (records.length !== 0) {
           res.json(records);
         } else {

@@ -87,7 +87,7 @@ const CoffeeStore = (props) => {
   );
 
   useEffect(() => {
-    if (data) {
+    if (data && data.voting) {
       setVotingCount(data.voting);
     }
   }, [data]);
@@ -99,6 +99,24 @@ const CoffeeStore = (props) => {
   if (error) {
     return <div>Something went wrong retriving confee store page!</div>;
   }
+
+  const handleVoteStore = async () => {
+    try {
+      let res = await fetch('/api/vote-store', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      });
+      res = await res.json();
+      if (res && res.length > 0) {
+        setVotingCount(votingCount + 1);
+      }
+    } catch (err) {
+      console.error('Error voting the coffee store', err);
+    }
+  };
 
   const { address, neighborhood, name, imgUrl } = store;
 
@@ -153,52 +171,23 @@ const CoffeeStore = (props) => {
               <p className={styles.text}>{neighborhood}</p>
             </div>
           )}
-          <Voting
-            id={id}
-            count={votingCount}
-            onVoted={() => setVotingCount(votingCount + 1)}
-          />
+
+          <div className={styles.iconWrapper}>
+            <Image
+              src="/static/icons/star.svg"
+              width="24"
+              height="24"
+              alt="star icon"
+            />
+            <p className={styles.text}>{votingCount}</p>
+          </div>
+
+          <button className={styles.upvoteButton} onClick={handleVoteStore}>
+            Up vote!
+          </button>
         </div>
       </div>
     </div>
-  );
-};
-
-const Voting = ({ id, count, onVoted }) => {
-  const handleVoteStore = async () => {
-    try {
-      let res = await fetch('/api/vote-store', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id }),
-      });
-      res = await res.json();
-      if (res && res.length > 0) {
-        onVoted();
-      }
-    } catch (err) {
-      console.error('Error voting the coffee store', err);
-    }
-  };
-
-  return (
-    <>
-      <div className={styles.iconWrapper}>
-        <Image
-          src="/static/icons/star.svg"
-          width="24"
-          height="24"
-          alt="star icon"
-        />
-        <p className={styles.text}>{count}</p>
-      </div>
-
-      <button className={styles.upvoteButton} onClick={handleVoteStore}>
-        Up vote!
-      </button>
-    </>
   );
 };
 
