@@ -53,7 +53,7 @@ export default function Home({ stores }) {
         />
         {errMessage && <p>Something went wrong: {errMessage}</p>}
         <div className={styles.heroImage}>
-          <Image src="/static/hero-image.png" width={700} height={400} />
+          <Image src="/static/hero-image.png" width={700} height={400}  alt='hero image'/>
         </div>
 
         {storesNearby.length > 0 && (
